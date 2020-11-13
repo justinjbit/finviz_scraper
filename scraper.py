@@ -10,6 +10,30 @@ generic_req = requests.get('https://finviz.com/quote.ashx?t=DIS',headers=header)
 generic_soup = BeautifulSoup(generic_req.text,'html.parser')
 index_list = [index.text for index in generic_soup.findAll('td',class_='snapshot-td2-cp')]
 
+# Hard code duplicate key fix
+index_list[20] = 'EPS growth this Y'
+index_list[26] = 'EPS growth next Y '
+
+# Fixing index list
+fixed_index_list = []
+i = 0
+j = 0
+z = 0
+while j < int(len(index_list)):
+    if i == 0:
+        fixed_index_list.append(index_list[0])
+        print(index_list[0])
+        i += 6
+        j += 1
+    elif i < 72:
+        fixed_index_list.append(index_list[i])
+        print(index_list[i])
+        i += 6
+        j += 1
+    else:
+        z += 1
+        i = z
+        
 # Beginning of Function
 
 # Input validation
@@ -29,8 +53,27 @@ except:
 soup = BeautifulSoup(request.text,'html.parser')
 data_row = [data.text for data in soup.findAll('td',class_='snapshot-td2')]
 
+
+# Fixing data rows
+fixed_data_row = []
+i = 0
+j = 0
+z = 0
+while j < int(len(index_list)):
+    if i == 0:
+        fixed_data_row.append(data_row[0])
+        i += 6
+        j += 1
+    elif i < 72:
+        fixed_data_row.append(data_row[i])
+        i += 6
+        j += 1
+    else:
+        z+=1
+        i = z
+
 # Building dict
-data_dict = dict(zip(index_list,data_row))
+data_dict = dict(zip(fixed_index_list,fixed_data_row))
 
 #Temporary index (currently only taking one ticker at a time)
 temp_column = [ticker]
