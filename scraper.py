@@ -1,8 +1,6 @@
 import requests
-from requests.exceptions import HTTPError
 import pandas as pd
 from bs4 import BeautifulSoup
-
 
 
 header = {"User-Agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.97 Safari/537.36"}
@@ -14,7 +12,15 @@ while not ticker.isalpha() or len(ticker) > 4:
 
 url = base_url + ticker
 request = requests.get(url,headers=header)
+
 try:
     request.raise_for_status()
 except:
-    print('That ticker does not exist. Try again!')
+    print('That ticker does not exist.')
+
+soup = BeautifulSoup(request.text,'html.parser')
+
+data_list = [data.text for data in soup.findAll('td',class_='snapshot-td2') ]
+title_list = [title.text for title in soup.findAll('td',class_='snapshot-td2-cp')]
+
+
