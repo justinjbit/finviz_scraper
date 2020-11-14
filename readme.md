@@ -1,7 +1,7 @@
 Goal list:  
 [✓] Scrape finviz.com for basic financial data  
 [✓] Return a DataFrame  
-[] Refactor code into functions  
+[✓] Refactor code into functions  
 [✓] Arrange columns properly  
 [✓] Arrange rows properly  
 [] Take in multiple tickers  
