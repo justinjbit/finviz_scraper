@@ -1,6 +1,7 @@
 import requests
 import pandas as pd
 from bs4 import BeautifulSoup
+import time
 
 df = None
 
@@ -40,9 +41,7 @@ def finviz_scraper(request,index_list):
     # Building DataFrame
     global df
     df = pd.DataFrame.from_dict(data_dict,orient = 'index',columns =temp_column)
-    
-    df.to_csv()
-        
+
     return df
 
 def main():
@@ -56,7 +55,7 @@ def main():
 
     # Hard code duplicate key fix
     index_list[20] = 'EPS growth this Y'
-    index_list[26] = 'EPS growth next Y '
+    index_list[26] = 'EPS growth next Y'
 
     # Fixing index list
     fixed_index_list = finviz_row_fixer(index_list)
@@ -74,8 +73,26 @@ def main():
     except:
         print('That ticker does not exist.')
     
-    print(finviz_scraper(request,fixed_index_list))
+    stock_data = finviz_scraper(request,fixed_index_list)
 
+    # Block out this portion if file types do not matter
+    time_stamp = time.strftime('%H_%M_%S')
+    answer = None
+    file_formats = ['csv','df','json','excel']
+    while answer not in file_formats:
+        answer = input('Please choose a file format(csv, json, df, excel)')
+        if answer == 'csv':
+            return stock_data.to_csv('stock_data_' + time_stamp + '.csv')
+        if answer =='df':
+            return stock_data
+        if answer == 'json':
+            return stock_data.to_json('stock_data_'+ time_stamp + '.json')
+        if answer == 'excel':
+            return stock_data.to_excel('stock_data_'+ time_stamp + '.xls')
+
+    # Test print
+    print(stock_data)
+    
 if __name__ == '__main__':
     main()
 
