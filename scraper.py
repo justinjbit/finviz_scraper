@@ -26,7 +26,7 @@ def finviz_row_fixer(broken_list):
             i += 6
             j += 1
         else:
-            z+=1
+            z += 1
             i = z
     return fixed_data_row
 
@@ -72,20 +72,21 @@ def input_validater():
         num_tickers = input('Enter number of tickers: ')
     num_tickers = int(num_tickers)
     tickers = [None] * num_tickers
+    
     for i in range(num_tickers):
         tickers[i] = input('Enter your ticker: ').upper()
-        while not tickers[i].isalpha() or len(tickers[i]) > 4:
-            tickers[i] = input('Only tickers less than five characters allowed. Try again! \nEnter your ticker symbol: ').upper()
-
-        time.sleep(.5)
         url = base_url + tickers[i]
         request = requests.get(url,headers=header)
-
-        try:
-            request.raise_for_status()
-        except:
-            print('That ticker does not exist.')
-    
+        status_code = str(request.status_code)
+        print('First Status: ',status_code)
+        while not (tickers[i].isalpha()) or (len(tickers[i]) > 4) or (status_code == '404'):
+            tickers[i] = input('The ticker you entered does not exist. Try again! \nEnter your ticker: ').upper()
+            time.sleep(.5)
+            url = base_url + tickers[i]
+            request = requests.get(url,headers=header)
+            status_code = str(request.status_code)
+            print('Second Status: ',status_code)
+        
     return tickers
 
 def main():
@@ -96,8 +97,8 @@ def main():
         time.sleep(.5)
         stock_data = finviz_scraper(tickers[i],index_list)
         final_df = pd.concat([final_df,stock_data], axis=1)
-        print('Preview:\n',final_df)
-
+    final_df.dropna()
+    print('Preview:\n',final_df)
     # If file types do not matter block out this portion and return df
     time_stamp = time.strftime('%H_%M_%S')
     answer = None
@@ -113,7 +114,7 @@ def main():
             return final_df.to_json('stock_data_'+ time_stamp + '.json')
         if answer == 'excel':
             return final_df.to_excel('stock_data_'+ time_stamp + '.xls')
-        
+
 if __name__ == '__main__':
     main()
 
