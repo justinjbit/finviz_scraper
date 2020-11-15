@@ -2,10 +2,14 @@ import requests
 import pandas as pd
 from bs4 import BeautifulSoup
 import time
+# Use the import below if you are running in terminal and want to use excel files
+#import xlwt
 
 df = None
+header = {"User-Agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.97 Safari/537.36"}
 
 def finviz_row_fixer(broken_list):
+
     # Fixing data in rows
     fixed_data_row = []
     i = 0
@@ -25,28 +29,8 @@ def finviz_row_fixer(broken_list):
             i = z
     return fixed_data_row
 
-def finviz_scraper(request,index_list):
 
-    # Scraping data
-    soup = BeautifulSoup(request.text,'html.parser')
-    data_row = [data.text for data in soup.findAll('td',class_='snapshot-td2')]
-
-    fixed_data_row = finviz_row_fixer(data_row)
-
-    # Building dict
-    data_dict = dict(zip(index_list,fixed_data_row))
-
-    # Temporary column (currently only taking one ticker at a time)
-    temp_column = ['ticker']
-    # Building DataFrame
-    global df
-    df = pd.DataFrame.from_dict(data_dict,orient = 'index',columns =temp_column)
-
-    return df
-
-def main():
-    header = {"User-Agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.97 Safari/537.36"}
-    base_url = 'https://finviz.com/quote.ashx?t='
+def generic_index_builder():
 
     # Building generic rows
     generic_req = requests.get('https://finviz.com/quote.ashx?t=DIS',headers=header)
@@ -58,10 +42,32 @@ def main():
     index_list[26] = 'EPS growth next Y'
 
     # Fixing index list
-    fixed_index_list = finviz_row_fixer(index_list)
+    index_list = finviz_row_fixer(index_list)
+    return index_list
 
-    # Input validation
-    ticker = input('Enter your ticker symbol: ').upper()
+def finviz_scraper(request,index_list):
+
+    # Scraping data
+    soup = BeautifulSoup(request.text,'html.parser')
+    data_row = [data.text for data in soup.findAll('td',class_='snapshot-td2')]
+
+    data_row = finviz_row_fixer(data_row)
+
+    # Building dict
+    data_dict = dict(zip(index_list,data_row))
+
+    # Temporary column (currently only taking one ticker at a time)
+    temp_column = ['ticker']
+    # Building DataFrame
+    global df
+    df = pd.DataFrame.from_dict(data_dict,orient = 'index',columns =temp_column)
+
+    return df
+
+def input_validater():
+    
+    base_url = 'https://finviz.com/quote.ashx?t='
+    ticker = input('Enter your ticker symbol(s): ').upper()
     while not ticker.isalpha() or len(ticker) > 4:
         ticker = input('Only strings less than five characters allowed. Try again! \nEnter your ticker symbol: ').upper()
 
@@ -73,14 +79,21 @@ def main():
     except:
         print('That ticker does not exist.')
     
-    stock_data = finviz_scraper(request,fixed_index_list)
+    return request
 
-    # Block out this portion if file types do not matter
+def main():
+
+    request = input_validater()
+    index_list = generic_index_builder()
+    stock_data = finviz_scraper(request,index_list)
+
+    # If file types do not matter block out this portion and return df
     time_stamp = time.strftime('%H_%M_%S')
     answer = None
     file_formats = ['csv','df','json','excel']
+    print('Preview:\n',stock_data)
     while answer not in file_formats:
-        answer = input('Please choose a file format(csv, json, df, excel)')
+        answer = input('Please choose a file format(csv, json, df, excel): ')
         if answer == 'csv':
             return stock_data.to_csv('stock_data_' + time_stamp + '.csv')
         if answer =='df':
@@ -90,8 +103,6 @@ def main():
         if answer == 'excel':
             return stock_data.to_excel('stock_data_'+ time_stamp + '.xls')
 
-    # Test print
-    print(stock_data)
     
 if __name__ == '__main__':
     main()
