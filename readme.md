@@ -4,7 +4,7 @@ Goal list:
 [✓] Refactor code into functions  
 [✓] Arrange columns properly  
 [✓] Arrange rows properly  
-[] Take in multiple tickers  
+[✓] Take in multiple tickers  
 [✓] Give options for file types to return  
 [] Gather upgrade/downgrade data  
 [] Gather news data  

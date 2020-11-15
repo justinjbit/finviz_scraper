@@ -7,6 +7,7 @@ import time
 
 df = None
 header = {"User-Agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.97 Safari/537.36"}
+base_url = 'https://finviz.com/quote.ashx?t='
 
 def finviz_row_fixer(broken_list):
 
@@ -29,7 +30,6 @@ def finviz_row_fixer(broken_list):
             i = z
     return fixed_data_row
 
-
 def generic_index_builder():
 
     # Building generic rows
@@ -45,8 +45,10 @@ def generic_index_builder():
     index_list = finviz_row_fixer(index_list)
     return index_list
 
-def finviz_scraper(request,index_list):
+def finviz_scraper(ticker,index_list):
 
+    url = base_url + ticker
+    request = requests.get(url,headers=header)
     # Scraping data
     soup = BeautifulSoup(request.text,'html.parser')
     data_row = [data.text for data in soup.findAll('td',class_='snapshot-td2')]
@@ -56,8 +58,7 @@ def finviz_scraper(request,index_list):
     # Building dict
     data_dict = dict(zip(index_list,data_row))
 
-    # Temporary column (currently only taking one ticker at a time)
-    temp_column = ['ticker']
+    temp_column = [ticker]
     # Building DataFrame
     global df
     df = pd.DataFrame.from_dict(data_dict,orient = 'index',columns =temp_column)
@@ -65,45 +66,54 @@ def finviz_scraper(request,index_list):
     return df
 
 def input_validater():
-    
-    base_url = 'https://finviz.com/quote.ashx?t='
-    ticker = input('Enter your ticker symbol(s): ').upper()
-    while not ticker.isalpha() or len(ticker) > 4:
-        ticker = input('Only strings less than five characters allowed. Try again! \nEnter your ticker symbol: ').upper()
 
-    url = base_url + ticker
-    request = requests.get(url,headers=header)
+    num_tickers = 'a'
+    while not num_tickers.isdigit():
+        num_tickers = input('Enter number of tickers: ')
+    num_tickers = int(num_tickers)
+    tickers = [None] * num_tickers
+    for i in range(num_tickers):
+        tickers[i] = input('Enter your ticker: ').upper()
+        while not tickers[i].isalpha() or len(tickers[i]) > 4:
+            tickers[i] = input('Only tickers less than five characters allowed. Try again! \nEnter your ticker symbol: ').upper()
 
-    try:
-        request.raise_for_status()
-    except:
-        print('That ticker does not exist.')
+        time.sleep(.5)
+        url = base_url + tickers[i]
+        request = requests.get(url,headers=header)
+
+        try:
+            request.raise_for_status()
+        except:
+            print('That ticker does not exist.')
     
-    return request
+    return tickers
 
 def main():
-
-    request = input_validater()
+    tickers = input_validater()
+    final_df = pd.DataFrame()
     index_list = generic_index_builder()
-    stock_data = finviz_scraper(request,index_list)
+    for i in range (len(tickers)):
+        time.sleep(.5)
+        stock_data = finviz_scraper(tickers[i],index_list)
+        final_df = pd.concat([final_df,stock_data], axis=1)
+        print('Preview:\n',final_df)
 
     # If file types do not matter block out this portion and return df
     time_stamp = time.strftime('%H_%M_%S')
     answer = None
     file_formats = ['csv','df','json','excel']
-    print('Preview:\n',stock_data)
+    #print('Preview:\n',stock_data)
     while answer not in file_formats:
         answer = input('Please choose a file format(csv, json, df, excel): ')
         if answer == 'csv':
-            return stock_data.to_csv('stock_data_' + time_stamp + '.csv')
+            return final_df.to_csv('stock_data_' + time_stamp + '.csv')
         if answer =='df':
-            return stock_data
+            return final_df
         if answer == 'json':
-            return stock_data.to_json('stock_data_'+ time_stamp + '.json')
+            return final_df.to_json('stock_data_'+ time_stamp + '.json')
         if answer == 'excel':
-            return stock_data.to_excel('stock_data_'+ time_stamp + '.xls')
-
-    
+            return final_df.to_excel('stock_data_'+ time_stamp + '.xls')
+        
 if __name__ == '__main__':
     main()
 
