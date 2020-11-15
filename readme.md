@@ -6,5 +6,7 @@ Goal list:
 [✓] Arrange rows properly  
 [✓] Take in multiple tickers  
 [✓] Give options for file types to return  
+
+Bonus ideas:  
 [] Gather upgrade/downgrade data  
 [] Gather news data  
