@@ -28,6 +28,7 @@ def finviz_row_fixer(broken_list):
         else:
             z += 1
             i = z
+
     return fixed_data_row
 
 def generic_index_builder():
@@ -52,13 +53,12 @@ def finviz_scraper(ticker,index_list):
     # Scraping data
     soup = BeautifulSoup(request.text,'html.parser')
     data_row = [data.text for data in soup.findAll('td',class_='snapshot-td2')]
-
     data_row = finviz_row_fixer(data_row)
 
     # Building dict
     data_dict = dict(zip(index_list,data_row))
-
     temp_column = [ticker]
+
     # Building DataFrame
     global df
     df = pd.DataFrame.from_dict(data_dict,orient = 'index',columns =temp_column)
@@ -76,16 +76,15 @@ def input_validater():
     for i in range(num_tickers):
         tickers[i] = input('Enter your ticker: ').upper()
         url = base_url + tickers[i]
+        time.sleep(.5)
         request = requests.get(url,headers=header)
         status_code = str(request.status_code)
-        print('First Status: ',status_code)
         while not (tickers[i].isalpha()) or (len(tickers[i]) > 4) or (status_code == '404'):
             tickers[i] = input('The ticker you entered does not exist. Try again! \nEnter your ticker: ').upper()
             time.sleep(.5)
             url = base_url + tickers[i]
             request = requests.get(url,headers=header)
-            status_code = str(request.status_code)
-            print('Second Status: ',status_code)
+            status_code = str(request.status_code)        
         
     return tickers
 
@@ -103,9 +102,8 @@ def main():
     time_stamp = time.strftime('%H_%M_%S')
     answer = None
     file_formats = ['csv','df','json','excel']
-    #print('Preview:\n',stock_data)
     while answer not in file_formats:
-        answer = input('Please choose a file format(csv, json, df, excel): ')
+        answer = input('Please enter a file format(csv, json, df, excel): ')
         if answer == 'csv':
             return final_df.to_csv('stock_data_' + time_stamp + '.csv')
         if answer =='df':
